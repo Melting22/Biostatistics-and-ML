@@ -1,5 +1,14 @@
 ## TCP/UCLA MRI data
 
+### Warning:
+The scripts contain temporary workarounds for corrupted CSV files. Read scripts/README.md for more information.
+
+### Usage:
+1. Execute `./setup.sh` and activate the .venv
+  - For nix users: run `nix-shell`
+2. Provide the `csv_data` folder with data
+3. Run `python scripts/processing/process_data.py`
+4. Generate charts by running scripts in `scripts/visualization`
 
 ### Folders:
  - original_data - data provided by customer
