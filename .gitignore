@@ -1,17 +1,35 @@
 # Игнорировать все файлы данных на любых уровнях вложенности
-*.xlsx
-*.xls
 *.csv
-*.npz
 *.json
+*.npz
+*.xls
+*.xlsx
 
 # Игнорировать папки с данными
-student_data/
+.tmp/
+charts/
 csv_data/
+example_charts/
 master_data/
 original_data/
+student_data/
 
-# Игнорировать виртуальное окружение и системный мусор
-venv/
+# Игнорировать виртуальное окружение
+.direnv/
+.env/
 .venv/
+env/
+venv/
+
+# Python: кэш и артефакты сборки
+*.egg-info/
+*.py[cod]
+.ipynb_checkpoints/
+__pycache__/
+build/
+dist/
+
+# IDE и системный мусор
+.idea/
+.vscode/
 .DS_Store
