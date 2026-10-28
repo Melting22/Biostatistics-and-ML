@@ -10,7 +10,7 @@ The scripts contain temporary workarounds for corrupted CSV files. Read scripts/
 3. Run `python scripts/processing/process_data.py`
 4. Generate charts by running scripts in `scripts/visualization`
 
-### Folders:
+### Contents:
  - original_data - data provided by customer
  - csv_data - CSV files extracted from Excels and TSVs
  - data - fully processed data ready for study: JSON and flat NPZ with legend
