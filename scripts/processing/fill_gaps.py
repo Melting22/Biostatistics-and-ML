@@ -5,12 +5,13 @@ from sklearn.impute import SimpleImputer
 from constants import TEMP_DATA_FILE
 
 
-"""Fills NaN values with mean column values in an NPZ file
-"""
 def fill_NaN_with_mean(
-        input_path: Path = TEMP_DATA_FILE,
-        output_path: Path = TEMP_DATA_FILE
-    ):
+    input_path: Path = TEMP_DATA_FILE,
+    output_path: Path = TEMP_DATA_FILE
+):
+    """
+    Fills NaN values with mean column values in an NPZ file
+    """
     data = np.load(input_path)
     X = data['data']
     cols = data['cols']

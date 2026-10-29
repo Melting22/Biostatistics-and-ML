@@ -1,31 +1,31 @@
 import csv
 import json
 from pathlib import Path
-from re import sub
+from typing import Any
 
 from constants import MEASUREMENTS, CSV_DIR, TEMP_NOSOLOGIES_FILE
 
 
-"""Converts substructure data from `csv_file_path` into JSON and puts it into `data`
-"""
 def _substructure_csv_to_json(
-        data: dict,
-        measurement: str,
-        csv_file_path: Path,
-        patient_column: str,
-        substructure_column: str 
-    ):
+    data: dict[str, Any],
+    measurement: str,
+    csv_file_path: Path,
+    patient_column: str,
+    substructure_column: str,
+):
+    """
+    Converts substructure data from `csv_file_path` into JSON and puts it into `data`
+    """
     patients = set()
     brain = measurement == "BRAINVOL"
     with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
         # TODO: Repair dataset and remove this
         try:
-        # TODO: End of remove
+            # TODO: End of remove
             csv_reader = csv.DictReader(csv_file, delimiter=";")
             for row in csv_reader:
-                if (
-                    patient_column not in row
-                    or (not brain and substructure_column not in row)
+                if patient_column not in row or (
+                    not brain and substructure_column not in row
                 ):
                     raise ValueError(f"Important columns not found in CSV file.")
                 patient = row[patient_column]
@@ -47,7 +47,9 @@ def _substructure_csv_to_json(
                     data[patient][measurement] = {}
 
                 if not brain and substructure in data[patient][measurement]:
-                    raise ValueError(f"Duplicate substructure {substructure} for patient {patient} in {measurement}")
+                    raise ValueError(
+                        f"Duplicate substructure {substructure} for patient {patient} in {measurement}"
+                    )
                 if brain:
                     data[patient][measurement] = attributes
                 else:
@@ -60,26 +62,29 @@ def _substructure_csv_to_json(
                     try:
                         float(value)
                     except ValueError:
-                        raise ValueError(f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}")
+                        raise ValueError(
+                            f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}"
+                        )
                     if value == "nan" and substructure != "unknown":
                         raise ValueError(f"NaN in {measurement} {substructure}")
         # TODO: Repair dataset and remove this
-        except UnicodeDecodeError: 
+        except UnicodeDecodeError:
             print(f"{csv_file_path} is corrupted.")
             return
         # TODO: End of remove
     print("Parsed", len(patients), "patients from ", measurement)
 
 
-"""Converts data from `csv_file_path` into JSON and puts it into `data`
-"""
 def _demos_csv_to_json(
-        data: dict,
-        csv_file_path: Path,
-        patient_column: str,
-        attr_name: str,
-        dataset: str
-    ):
+    data: dict[str, Any],
+    csv_file_path: Path,
+    patient_column: str,
+    attr_name: str,
+    dataset: str,
+):
+    """
+    Converts data from `csv_file_path` into JSON and puts it into `data`
+    """
     patients = set()
     with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=",")
@@ -102,32 +107,43 @@ def _demos_csv_to_json(
                 patients.add(patient)
     print("Parsed", len(patients), "patients from", attr_name)
 
-"""Converts substructure measurements from `dataset_name` into JSON and puts it into `data`
-"""
-def _parse_dataset(data:dict , dataset_name: str):
+
+def _parse_dataset(data: dict[str, Any], dataset_name: str):
+    """
+    Converts substructure measurements from `dataset_name` into JSON and puts it into `data`
+    """
     for m in MEASUREMENTS:
-        path = (
-            CSV_DIR /
-            f"{dataset_name}_CSV" /
-            f"{dataset_name}_{m}.csv"
-        )
+        path = CSV_DIR / f"{dataset_name}_CSV" / f"{dataset_name}_{m}.csv"
         _substructure_csv_to_json(data, m, path, "sub_name", "StructName")
     print("Total", len(data), "patients.")
 
-"""Converts all CSV data into a single JSON and writes it to `output_path`
-"""
+
 def convert_csv_to_json(output_path: Path = TEMP_NOSOLOGIES_FILE):
+    """
+    Converts all CSV data into a single JSON and writes it to `output_path`
+    """
     data = {}
 
     _parse_dataset(data, "TCP")
     _parse_dataset(data, "UCLA")
 
-    _demos_csv_to_json(data, CSV_DIR / "TCP_demos_fixed.csv",
-                      "subjectkey", "tcp_demos", "TCP")
-    _demos_csv_to_json(data, CSV_DIR / "UCLA_demographics_fixed.csv",
-                      "participant_id", "ucla_demos", "UCLA")
-    _demos_csv_to_json(data, CSV_DIR / "UCLA_participants_fixed.csv",
-                      "participant_id", "ucla_participant", "UCLA")
+    _demos_csv_to_json(
+        data, CSV_DIR / "TCP_demos_fixed.csv", "subjectkey", "tcp_demos", "TCP"
+    )
+    _demos_csv_to_json(
+        data,
+        CSV_DIR / "UCLA_demographics_fixed.csv",
+        "participant_id",
+        "ucla_demos",
+        "UCLA",
+    )
+    _demos_csv_to_json(
+        data,
+        CSV_DIR / "UCLA_participants_fixed.csv",
+        "participant_id",
+        "ucla_participant",
+        "UCLA",
+    )
 
     with open(output_path, mode="w", encoding="utf-8") as json_file:
         json.dump(data, json_file, indent=4, ensure_ascii=False)
@@ -135,6 +151,7 @@ def convert_csv_to_json(output_path: Path = TEMP_NOSOLOGIES_FILE):
 
 def main():
     convert_csv_to_json()
+
 
 if __name__ == "__main__":
     main()

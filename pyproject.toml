@@ -12,6 +12,7 @@ dependencies = [
     "scikit-learn>=1.5",  # TSNE(max_iter=...) appeared in 1.5
     "matplotlib>=3.8",
     "seaborn>=0.13",
+    "pandas-stubs",
 ]
 [tool.setuptools]
 py-modules = ["constants"]

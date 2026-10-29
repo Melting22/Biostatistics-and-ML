@@ -1,23 +1,21 @@
-import re
-
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from pathlib import Path
 
-from constants import CHARTS_DIR, MEASUREMENTS, DATA_FILE
+from constants import CHARTS_DIR, DATA_FILE
 
 
-"""Creates a histogram for the specified measurement
-"""
 def create_histogram(
-        m_number: int = 55,
-        data_path: Path = DATA_FILE,
-    ):
+    m_number: int = 55,
+    data_path: Path = DATA_FILE,
+):
+    """
+    Creates a histogram for the specified measurement
+    """
     with np.load(data_path) as archive:
-        data = archive['data']
-        patients = archive['rows']
-        measurements = archive['cols']
+        data = archive["data"]
+        measurements = archive["cols"]
 
     measurement_name = measurements[m_number]
     if measurement_name not in measurements:
@@ -32,13 +30,9 @@ def create_histogram(
     # stat="density" ensures the histogram and KDE are of the same scale
     # 1. Histogram without KDE
     sns.histplot(
-        data[:, m_number],
-        stat="density",
-        bins=30,
-        color="skyblue",
-        edgecolor="black"
+        data[:, m_number], stat="density", bins=30, color="skyblue", edgecolor="black"
     )
-    # 2. Overlaping with KDE line 
+    # 2. Overlaping with KDE line
     sns.kdeplot(data[:, m_number], color="steelblue", linewidth=2.5)
 
     # Axis names
@@ -55,6 +49,7 @@ def create_histogram(
 
 def main():
     create_histogram()
+
 
 if __name__ == "__main__":
     main()
