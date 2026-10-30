@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
 
 from constants import DATA_FILE
 
@@ -35,7 +36,7 @@ def show_patient_data(patient_identifier: int | str = 73, data_file: Path = DATA
 
     for col_idx, col_name in enumerate(cols):
         val = X_df.iloc[idx, col_idx]
-        print(f"{col_idx:<4} | {str(col_name):<40} | {val}")
+        print(f"{col_idx:<4} | {col_name!s:<40} | {val}")
 
     print("-" * 65)
 
