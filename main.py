@@ -7,7 +7,7 @@ from scripts.npz import NPZData
 from scripts.visualization import create_histogram, create_TSNE
 
 logging.basicConfig(
-    filename="log.txt",
+    filename="logs.txt",
     filemode="w",
     level=logging.DEBUG,
     format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
