@@ -19,12 +19,6 @@ def convert_json_to_npz(
     for patient_key, patient in data_dict.items():
         patients[patient_key] = {}
         for measurement in MEASUREMENTS:
-            # TODO: Repair dataset and remove this
-            if measurement not in patient.keys():
-                print(f"{measurement} is missing!")
-                continue
-            # TODO: End of remove
-
             if measurement != "BRAINVOL":
                 for subarea, subarea_data in patient[measurement].items():
                     if measurement + subarea == "rh.aparc.DKTatlastemporalpole":

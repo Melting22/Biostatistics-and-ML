@@ -29,6 +29,9 @@ __pycache__/
 build/
 dist/
 
+# Логи
+logs.txt
+
 # IDE и системный мусор
 .idea/
 .vscode/

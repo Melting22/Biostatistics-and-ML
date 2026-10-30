@@ -13,6 +13,7 @@ dependencies = [
     "matplotlib>=3.8",
     "seaborn>=0.13",
     "pandas-stubs",
+    "scikit-learn-stubs",
 ]
 [tool.setuptools]
 py-modules = ["constants"]

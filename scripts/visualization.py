@@ -1,25 +1,29 @@
 import json
+import logging
 from pathlib import Path
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from sklearn.manifold import TSNE
 
-from constants import CHARTS_DIR, DATA_FILE, NOSOLOGIES_FILE
-from scripts_classes.npz import NPZData
+from constants import CHARTS_DIR, NOSOLOGIES_FILE
+from scripts.npz import NPZData
 
 TSNE_COLORS = ["#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00"]
+
+log = logging.getLogger(__name__)
 
 
 def create_histogram(npz: NPZData, m_number: int = 55):
     """
     Creates a histogram for the specified measurement
     """
-    measurement_name = npz.cols[m_number]
-    if measurement_name not in npz.cols:
-        print(f"{measurement_name} measurement doesn't exist")
+    if not 0 <= m_number < len(npz.cols):
+        print(f"Measurement {m_number} doesn't exist")
         return
+    measurement_name = npz.cols[m_number]
 
     # Plot style
     sns.set_theme(style="whitegrid")
@@ -43,30 +47,29 @@ def create_histogram(npz: NPZData, m_number: int = 55):
     plt.xlabel("Значения", fontsize=12)
     plt.ylabel("Плотность вероятности", fontsize=12)
 
-    plt.show()
+    # plt.show()
 
     save_path = CHARTS_DIR / "histograms" / f"{measurement_name}.png"
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path)
+    plt.close()
 
 
 def create_TSNE(
     npz: NPZData,
-    init: str = "pca",
+    init: Literal["random", "pca"] = "pca",
     perplexity: int = 30,
     max_iter: int = 1000,
     random_state: int = 42,
-    data_file: Path = DATA_FILE,
     nosologies_file: Path = NOSOLOGIES_FILE,
 ):
     """
     Creates TSNE charts
     """
-    data = np.load(data_file)
-    X = data["data"]  # (501, 4600)
+    data = npz.data  # (501, 4600)
 
     with open(nosologies_file, "r", encoding="utf-8") as f:
-        npz.json = json.load(f)
+        patients_info = json.load(f)
 
     # perplexity обычно выбирают в пределах от 5 до 50 (для 501 вектора хорошо подойдет 30)
     tsne = TSNE(
@@ -76,33 +79,40 @@ def create_TSNE(
         max_iter=max_iter,
         init=init,
     )
-    X_2d = tsne.fit_transform(X)
+    X_2d = tsne.fit_transform(data)
 
     # Plot regular TSNE
-    print("Plotting regular TSNE")
+    log.info("Plotting regular TSNE")
     plt.figure(figsize=(10, 8))
-    plt.scatter(X_2d[:, 0], X_2d[:, 1], alpha=0.7, edgecolors="b", cmap="viridis")
+    plt.scatter(
+        X_2d[:, 0], X_2d[:, 1], alpha=0.7, edgecolors="b", cmap="viridis"
+    )
 
     plt.title(
-        f"t-SNE визуализация векторов ({X.shape[0]} x {X.shape[1]} -> 2D)",
+        f"t-SNE визуализация векторов ({data.shape[0]} x {data.shape[1]} -> 2D)",
         fontsize=14,
     )
     plt.xlabel("t-SNE Компонента 1", fontsize=12)
     plt.ylabel("t-SNE Компонента 2", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.5)
 
-    plt.show()
+    # plt.show()
 
     save_path = (
-        CHARTS_DIR / "TSNE" / f"{init}_{perplexity}_{max_iter}_{random_state}.png"
+        CHARTS_DIR
+        / "TSNE"
+        / f"{init}_{perplexity}_{max_iter}_{random_state}.png"
     )
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path)
+    plt.close()
 
     # Plot colored TSNE
     for criteria in ("gender", "dataset", "nosology"):
-        print(f"Plotting colored TSNE ({criteria})")
-        labels = np.array([npz.json[patient][criteria] for patient in npz.rows])
+        log.info(f"Plotting colored TSNE ({criteria})")
+        labels = np.array(
+            [patients_info[patient][criteria] for patient in npz.rows]
+        )
 
         unique_labels = np.unique(labels)
 
@@ -123,7 +133,7 @@ def create_TSNE(
         # plt.scatter(X_2d[:, 0], X_2d[:, 1], alpha=0.7, edgecolors='b', cmap='viridis')
 
         plt.title(
-            f"t-SNE визуализация векторов ({X.shape[0]} x {X.shape[1]} -> 2D)",
+            f"t-SNE визуализация векторов ({data.shape[0]} x {data.shape[1]} -> 2D)",
             fontsize=14,
         )
         plt.xlabel("t-SNE Компонента 1", fontsize=12)
@@ -140,3 +150,4 @@ def create_TSNE(
         )
         save_path.parent.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_path)
+        plt.close()

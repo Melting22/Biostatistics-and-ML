@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from constants import MEASUREMENTS, CSV_DIR, TEMP_NOSOLOGIES_FILE
+from constants import CSV_DIR, MEASUREMENTS, TEMP_NOSOLOGIES_FILE
 
 
 def _substructure_csv_to_json(
@@ -19,59 +19,51 @@ def _substructure_csv_to_json(
     patients = set()
     brain = measurement == "BRAINVOL"
     with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
-        # TODO: Repair dataset and remove this
-        try:
-            # TODO: End of remove
-            csv_reader = csv.DictReader(csv_file, delimiter=";")
-            for row in csv_reader:
-                if patient_column not in row or (
-                    not brain and substructure_column not in row
-                ):
-                    raise ValueError(f"Important columns not found in CSV file.")
-                patient = row[patient_column]
-                patients.add(patient)
-                if not brain:
-                    substructure = row[substructure_column]
-                else:
-                    substructure = ""
+        csv_reader = csv.DictReader(csv_file, delimiter=";")
+        for row in csv_reader:
+            if patient_column not in row or (
+                not brain and substructure_column not in row
+            ):
+                raise ValueError("Important columns not found in CSV file.")
+            patient = row[patient_column]
+            patients.add(patient)
+            if not brain:
+                substructure = row[substructure_column]
+            else:
+                substructure = ""
 
-                attributes = row.copy()
-                del attributes[patient_column]
-                if not brain:
-                    del attributes[substructure_column]
-                del attributes["source_file"]
+            attributes = row.copy()
+            del attributes[patient_column]
+            if not brain:
+                del attributes[substructure_column]
+            del attributes["source_file"]
 
-                if patient not in data:
-                    data[patient] = {}
-                if measurement not in data[patient]:
-                    data[patient][measurement] = {}
+            if patient not in data:
+                data[patient] = {}
+            if measurement not in data[patient]:
+                data[patient][measurement] = {}
 
-                if not brain and substructure in data[patient][measurement]:
+            if not brain and substructure in data[patient][measurement]:
+                raise ValueError(
+                    f"Duplicate substructure {substructure} for patient {patient} in {measurement}"
+                )
+            if brain:
+                data[patient][measurement] = attributes
+            else:
+                if substructure != "unknown":
+                    data[patient][measurement][substructure] = attributes
+
+            for key, value in attributes.items():
+                value = value.replace(",", ".")
+                attributes[key] = value
+                try:
+                    float(value)
+                except ValueError:
                     raise ValueError(
-                        f"Duplicate substructure {substructure} for patient {patient} in {measurement}"
+                        f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}"
                     )
-                if brain:
-                    data[patient][measurement] = attributes
-                else:
-                    if substructure != "unknown":
-                        data[patient][measurement][substructure] = attributes
-
-                for key, value in attributes.items():
-                    value = value.replace(",", ".")
-                    attributes[key] = value
-                    try:
-                        float(value)
-                    except ValueError:
-                        raise ValueError(
-                            f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}"
-                        )
-                    if value == "nan" and substructure != "unknown":
-                        raise ValueError(f"NaN in {measurement} {substructure}")
-        # TODO: Repair dataset and remove this
-        except UnicodeDecodeError:
-            print(f"{csv_file_path} is corrupted.")
-            return
-        # TODO: End of remove
+                if value == "nan" and substructure != "unknown":
+                    raise ValueError(f"NaN in {measurement} {substructure}")
     print("Parsed", len(patients), "patients from ", measurement)
 
 
@@ -90,7 +82,7 @@ def _demos_csv_to_json(
         csv_reader = csv.DictReader(csv_file, delimiter=",")
         for row in csv_reader:
             if patient_column not in row:
-                raise ValueError(f"Important columns not found in the CSV file.")
+                raise ValueError("Important columns not found in the CSV file.")
 
             patient = row[patient_column]
             patient = patient.replace("_", "")

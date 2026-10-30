@@ -35,6 +35,7 @@ BASE_DIR = Path(__file__).resolve().parent
 CSV_DIR = BASE_DIR / "csv_data"
 TEMP_DIR = BASE_DIR / ".tmp"
 DATA_DIR = BASE_DIR / "data"
+REPORTS_DIR = BASE_DIR / "reports"
 
 CHARTS_DIR = BASE_DIR / "charts"
 
