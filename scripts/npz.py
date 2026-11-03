@@ -24,7 +24,7 @@ class NPZData:
         self.cols: NDArray[Any] = np.array([])
 
     @property
-    def patient_count(self):  # noqa: ANN201
+    def patient_count(self) -> int:
         """Number of patients in the data."""
         return len(self.rows)
 
