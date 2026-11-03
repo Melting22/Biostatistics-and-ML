@@ -1,13 +1,18 @@
 import csv
+import logging
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
 from constants import CHARTS_DIR, REPORTS_DIR
 from scripts.npz import NPZData
+
+log = logging.getLogger(__name__)
 
 
 def isolation_forest(
@@ -17,6 +22,8 @@ def isolation_forest(
     Flags multivariate anomalies with Isolation Forest on standardized data.
     Returns boolean mask of anomalous patients.
     """
+    log.info("Started IsolationForest analysis")
+    print("\n--- IsolationForest analysis ---")
     data = npz.data
 
     # Safety net: fill leftover NaN with column medians
@@ -26,10 +33,8 @@ def isolation_forest(
         medians = np.nanmedian(data, axis=0)
         data = np.where(nan_mask, medians, data)
 
-    print("--- Standardization (StandardScaler) ---")
     scaled = StandardScaler().fit_transform(data)
 
-    print("--- Training Isolation Forest ---")
     iso_forest = IsolationForest(
         contamination=contamination, random_state=random_state
     )
@@ -51,9 +56,15 @@ def isolation_forest(
         writer.writerow(["patient_id", "status", "score"])
         for i in anomalous_idx:
             writer.writerow([npz.rows[i], "Anomalous", f"{scores[i]:.4f}"])
-    print(f"Report saved: {report_path}")
 
-    print("--- Plotting 2D anomaly map (PCA) ---")
+    print(f"IsolationForest report saved to {report_path}")
+
+    _plot(scaled, anomaly_mask)
+    log.info("Finished IQR outlier analysis")
+    return anomaly_mask
+
+
+def _plot(scaled: NDArray[Any], anomaly_mask: NDArray[Any]):
     x_2d = PCA(n_components=2).fit_transform(scaled)
 
     plt.figure(figsize=(10, 8))
@@ -84,7 +95,7 @@ def isolation_forest(
 
     out_dir = CHARTS_DIR / "IsolationForest"
     out_dir.mkdir(parents=True, exist_ok=True)
-    plt.savefig(out_dir / "visualization_isolation_forest_pca.png", dpi=300)
+    out_path = out_dir / "visualization_isolation_forest_pca.png"
+    plt.savefig(out_path, dpi=300)
     plt.close()
-
-    return anomaly_mask
+    print(f"Saved IsolationForest plot to {out_path}")

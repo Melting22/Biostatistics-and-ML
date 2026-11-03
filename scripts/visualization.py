@@ -84,9 +84,7 @@ def create_TSNE(
     # Plot regular TSNE
     log.info("Plotting regular TSNE")
     plt.figure(figsize=(10, 8))
-    plt.scatter(
-        X_2d[:, 0], X_2d[:, 1], alpha=0.7, edgecolors="b", cmap="viridis"
-    )
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c="blue", alpha=0.7, edgecolors="b")
 
     plt.title(
         f"t-SNE визуализация векторов ({data.shape[0]} x {data.shape[1]} -> 2D)",

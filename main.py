@@ -1,7 +1,6 @@
 import logging
 
 from constants import DATA_FILE, NOSOLOGIES_FILE
-from scripts.analysis import info
 from scripts.iqr_analysis import iqr_analyze
 from scripts.isolation_forest_analysis import isolation_forest
 from scripts.json_data import JSONData
@@ -11,7 +10,7 @@ from scripts.visualization import create_histogram, create_TSNE
 logging.basicConfig(
     filename="logs.txt",
     filemode="w",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
@@ -24,9 +23,9 @@ n = (
     .fill_NaN()
     .drop_columns_with_many_zeros()
     .save(path=DATA_FILE)
+    .info()
 )
 
-info(n)
 
 create_TSNE(n)
 create_histogram(n)

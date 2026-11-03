@@ -5,11 +5,6 @@ import numpy as np
 from scripts.npz import NPZData
 
 
-def info(npz: NPZData):
-    print(f"Array shape: {npz.data.shape}")
-    print(f"Patient count: {npz.patient_count}")
-
-
 def show_patient_data(npz: NPZData, patient_identifier: int | str = 73):
     """
     Outputs all measurement data on a patient. Accepts index or ID-code.

@@ -1,6 +1,7 @@
 import csv
 import itertools
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -20,15 +21,57 @@ REVERSE_NOSO_MAP = {
     value: key for key, arr in NOSO_MAP.items() for value in arr
 }
 
+log = logging.getLogger(__name__)
+
 
 class JSONData:
     def __init__(self) -> None:
         self.data: dict[str, Any] = {}
 
+        self.tcp_nosologies: set[str] = set()
+        self.ucla_nosologies: set[str] = set()
+        self.others: set[str] = set()
+        self.noso_counters: dict[str, dict[str, int]] = {}
+        self.gender_counters: dict[str, dict[str, int]] = {}
+        self.age_counters: dict[str, dict[str, int]] = {}
+        self.invalid_count: int = 0
+
+    def info(self) -> JSONData:
+        print("TCP")
+        print(self.tcp_nosologies)
+        print("UCLA")
+        print(self.ucla_nosologies)
+        print("NOSOLOGIES")
+        print(json.dumps(self.noso_counters, indent=4, ensure_ascii=False))
+        print("GENDERS")
+        print(json.dumps(self.gender_counters, indent=4, ensure_ascii=False))
+        print("AGES")
+        print(*self.age_counters.items(), sep="\n")
+        print("OTHERS")
+        print(self.others)
+        print("ANOMALIES")
+        print(
+            "TOTAL",
+            len(self.data),
+            "OTHER",
+            len(self.others),
+            "INVALID",
+            self.invalid_count,
+        )
+        return self
+
+    def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
+        log.info(f"Started saving to {path}")
+        with open(path, mode="w", encoding="utf-8") as json_file:
+            json.dump(self.data, json_file, indent=4, ensure_ascii=False)
+        log.info(f"Saved to {path}")
+        return self
+
     def from_csv(self) -> JSONData:
         """
         Converts all CSV data into a single JSON and writes it to `output_path`
         """
+        log.info("Started parsing CSV files")
         self._parse_dataset("TCP")
         self._parse_dataset("UCLA")
 
@@ -50,42 +93,39 @@ class JSONData:
             "ucla_participant",
             "UCLA",
         )
-        return self
-
-    def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
-        with open(path, mode="w", encoding="utf-8") as json_file:
-            json.dump(self.data, json_file, indent=4, ensure_ascii=False)
+        log.info("Finished parsing CSV files")
         return self
 
     def normalize_nosologies(self) -> JSONData:
         """
         Normalize and summarize patient nosology, gender, and age statistics.
         """
-        tcp_nosologies = set()
-        ucla_nosologies = set()
-        others = set()
+        self.tcp_nosologies = set()
+        self.ucla_nosologies = set()
+        self.others = set()
+        self.noso_counters = {}
+        self.gender_counters = {}
+        self.age_counters = {}
+        self.invalid_count = 0
 
-        invalid_count = 0
-
-        noso_counters = {}
-        gender_counters = {}
-        age_counters = {}
         for key in ["TCP", "UCLA"]:
-            noso_counters[key] = dict.fromkeys(NOSO_MAP.keys() | {"OTHER"}, 0)
-            gender_counters[key] = dict.fromkeys({"M", "F", "O"}, 0)
-            age_counters[key] = dict.fromkeys(
+            self.noso_counters[key] = dict.fromkeys(
+                NOSO_MAP.keys() | {"OTHER"}, 0
+            )
+            self.gender_counters[key] = dict.fromkeys({"M", "F", "O"}, 0)
+            self.age_counters[key] = dict.fromkeys(
                 [str(age) for age in itertools.chain(range(18, 69), [999])], 0
             )
 
         for patient in self.data.values():
             if patient["dataset"] == "TCP":
                 nosology = patient["tcp_demos"]["Primary_Dx"]
-                tcp_nosologies.add(nosology)
+                self.tcp_nosologies.add(nosology)
                 if nosology in REVERSE_NOSO_MAP:
                     patient["nosology"] = REVERSE_NOSO_MAP[nosology]
                 else:
                     patient["nosology"] = "OTHER"
-                    others.add(nosology)
+                    self.others.add(nosology)
                 patient["gender"] = patient["tcp_demos"]["sex"]
                 patient["age"] = patient["tcp_demos"]["Age"]
             elif patient["dataset"] == "UCLA":
@@ -93,7 +133,7 @@ class JSONData:
                 patient["nosology"] = nosology
                 patient["gender"] = patient["ucla_participant"]["gender"]
                 patient["age"] = patient["ucla_participant"]["age"]
-                ucla_nosologies.add(nosology)
+                self.ucla_nosologies.add(nosology)
             else:
                 raise ValueError("Wow, not a patient")
 
@@ -104,38 +144,16 @@ class JSONData:
             )
 
             if not patient["valid"]:
-                invalid_count += 1
+                self.invalid_count += 1
             ds = patient["dataset"]
             nos = patient["nosology"]
             gen = patient["gender"]
             age = patient["age"]
-            age_counters[ds][age] += 1
-            gender_counters[ds][gen] += 1
-            noso_counters[ds][nos] += 1
-
-        print("TCP")
-        print(tcp_nosologies)
-        print("UCLA")
-        print(ucla_nosologies)
-        print("NOSOLOGIES")
-        print(json.dumps(noso_counters, indent=4, ensure_ascii=False))
-        print("GENDERS")
-        print(json.dumps(gender_counters, indent=4, ensure_ascii=False))
-        print("AGES")
-        print(*age_counters.items(), sep="\n")
-        print("OTHERS")
-        print(others)
-        print("ANOMALIES")
-        print(
-            "TOTAL",
-            len(self.data),
-            "OTHER",
-            len(others),
-            "INVALID",
-            invalid_count,
-        )
+            self.age_counters[ds][age] += 1
+            self.gender_counters[ds][gen] += 1
+            self.noso_counters[ds][nos] += 1
+        log.info("Finished normalizing values")
         return self
-
 
     def _substructure_csv_to_json(
         self,
@@ -200,7 +218,9 @@ class JSONData:
                         )
                     if value == "nan" and substructure != "unknown":
                         raise ValueError(f"NaN in {measurement} {substructure}")
-        print("Parsed", len(patients), "patients from ", measurement)
+        log.info(
+            f"Parsed {len(patients)} patients from {measurement} from {csv_file_path}"
+        )
 
     def _demos_csv_to_json(
         self,
@@ -234,7 +254,9 @@ class JSONData:
                     self.data[patient][attr_name] = attributes
                     self.data[patient]["dataset"] = dataset
                     patients.add(patient)
-        print("Parsed", len(patients), "patients from", attr_name)
+        log.info(
+            f"Parsed {len(patients)} patients from {attr_name} from {csv_file_path}"
+        )
 
     def _parse_dataset(self, dataset_name: str):
         """
@@ -243,4 +265,5 @@ class JSONData:
         for m in MEASUREMENTS:
             path = CSV_DIR / f"{dataset_name}_CSV" / f"{dataset_name}_{m}.csv"
             self._substructure_csv_to_json(m, path, "sub_name", "StructName")
-        print("Total", len(self.data), "patients.")
+        print("Parsed total of", len(self.data), "patients.")
+        log.info(f"Parsed total of: {len(self.data)} patients")

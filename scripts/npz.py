@@ -24,6 +24,31 @@ class NPZData:
     def patient_count(self):
         return len(self.rows)
 
+    def info(self) -> NPZData:
+        print(f"Array shape: {self.data.shape}")
+        print(f"Patient count: {self.patient_count}")
+        return self
+
+    def save(self, path: Path = DATA_FILE) -> NPZData:
+        """
+        Writes the data to `output_path`
+        """
+        # np.savez_compressed(
+        #     output_path,
+        #     data=np.array(self.data),
+        #     rows=np.array(self.rows),
+        #     cols=np.array(self.cols),
+        # )
+        log.info(f"Started saving to {path}")
+        np.savez_compressed(
+            path,
+            data=self.data,
+            rows=self.rows,
+            cols=self.cols,
+        )
+        log.info(f"Saved to {path}")
+        return self
+
     def from_file(self, npz_file: Path = DATA_FILE) -> NPZData:
         log.info(f"Started loading {npz_file}")
         npz: NpzFile = np.load(npz_file, allow_pickle=True)
@@ -39,6 +64,7 @@ class NPZData:
         """
         Converts JSON data to Numpy array and saves it as NPZ
         """
+        log.info("Started conversion from JSONData")
         patients = {}
         column_names = set()
         for patient_key, patient in json_data.data.items():
@@ -79,26 +105,7 @@ class NPZData:
         for i, patient_name in enumerate(self.rows):
             for j, column_name in enumerate(self.cols):
                 self.data[i][j] = float(patients[patient_name][column_name])
-        return self
-
-    def save(self, path: Path = DATA_FILE) -> NPZData:
-        """
-        Writes the data to `output_path`
-        """
-        # np.savez_compressed(
-        #     output_path,
-        #     data=np.array(self.data),
-        #     rows=np.array(self.rows),
-        #     cols=np.array(self.cols),
-        # )
-        log.info(f"Started saving to {path}")
-        np.savez_compressed(
-            path,
-            data=self.data,
-            rows=self.rows,
-            cols=self.cols,
-        )
-        log.info(f"Saved to {path}")
+        log.info("Finished conversion from JSONData")
         return self
 
     def fill_all_NaN_with_mean(self) -> NPZData:
@@ -128,7 +135,7 @@ class NPZData:
         if len(has_nan) == 0:
             print("No NaN values found")
             return self
-        print("--- NaN content table ---")
+        print("\n--- NaN content table ---")
 
         line = "-" * 110
         print(f"Columns with NaN: {len(has_nan)}")
@@ -163,6 +170,7 @@ class NPZData:
         print(
             f"NaN remaining: {np.isnan(self.data).sum()} (in columns with > 5% NaN)"
         )
+        log.info("Performed imputation")
         return self
 
     def drop_columns_with_many_zeros(self, threshold: float = 0.05) -> NPZData:
@@ -172,10 +180,13 @@ class NPZData:
         zero_counts = (self.data == 0).sum(axis=0)
         keep = zero_counts <= self.patient_count * threshold
 
-        print(f"Columns before: {len(self.cols)}")
+        before = len(self.cols)
+        print(f"Columns before: {before}")
         print(f"Columns removed (> {threshold:.0%} zeros): {(~keep).sum()}")
 
         self.data = self.data[:, keep]
         self.cols = self.cols[keep]
-        print(f"Columns after: {len(self.cols)}")
+        after = len(self.cols)
+        print(f"Columns after: {after}")
+        log.info(f"Dropped zeros. Columns (before | after): {before} | {after} ")
         return self
