@@ -1,8 +1,7 @@
 from pathlib import Path
+import sys
 
 from numpy import float32
-
-from flash_dir import FLASH_DIR
 
 MEASUREMENTS = [
     "hypothalamic_subunits_volumes.v",
@@ -32,10 +31,51 @@ MEASUREMENTS = [
     "aseg",
     "BRAINVOL",
 ]
-
 VALUES_DTYPE = float32
 
+
 BASE_DIR = Path(__file__).resolve().parent
+_FLASH_DIR_FILE = BASE_DIR / ".flash_dir"
+
+def _validate(raw: str) -> Path | None:
+    path = Path(raw.strip()).expanduser()
+    if path.is_absolute() and path.is_dir():
+        return path.resolve()
+    return None
+
+
+def _prompt_flash_dir() -> Path:
+    if not sys.stdin.isatty():
+        raise RuntimeError(
+            f"{_FLASH_DIR_FILE} not found: run any script interactively "
+            + "once or create the file manually"
+        )
+    while True:
+        path = _validate(input("Absolute path to the flash drive: "))
+        if path is not None:
+            _FLASH_DIR_FILE.write_text(f"{path}\n", encoding="utf-8")
+            return path
+        print("Not an existing absolute directory, try again.")
+
+
+def _load_flash_dir() -> Path:
+    if not _FLASH_DIR_FILE.is_file():
+        return _prompt_flash_dir()
+    try:
+        text = _FLASH_DIR_FILE.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise RuntimeError(f"Failed to read {_FLASH_DIR_FILE}: {exc}") from exc
+    lines = [s for s in text.splitlines() if s.strip()]
+    path = _validate(lines[0]) if lines else None
+    if path is None:
+        raise RuntimeError(
+            f"Invalid path in {_FLASH_DIR_FILE}: mount the drive "
+            + "or delete the file to enter the path again"
+        )
+    return path
+
+FLASH_DIR = _load_flash_dir()
+
 
 CSV_DIR = FLASH_DIR / "csv_data"
 DATA_DIR = FLASH_DIR / "data"

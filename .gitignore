@@ -5,6 +5,9 @@
 *.xls
 *.xlsx
 
+# Файл с путём к флешке с данными
+.flash_dir
+
 # Исключения для настроек vs code
 !.vscode/settings.json
 !.vscode/extensions.json
