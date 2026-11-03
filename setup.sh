@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")"
 
 if [ ! -d .venv ]; then
-    python3 -m venv .venv
+    python3.14 -m venv .venv
 fi
 
 if [ -f .venv/Scripts/activate ]; then
