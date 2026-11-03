@@ -38,13 +38,7 @@ n = (
 )
 
 # Save as above, loading from a saved NPZ file
-n = (
-    NPZData()
-    .from_file(DATA_FILE)
-    .fill_nan()
-    .drop_columns_with_many_zeros()
-    .save()
-)
+n = NPZData().from_file(DATA_FILE).fill_nan().drop_columns_with_many_zeros().save()
 
 j.info()
 n.info()

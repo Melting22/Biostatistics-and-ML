@@ -5,8 +5,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from numpy import sort
-
 from constants import (
     CSV_DIR,
     MEASUREMENTS,
@@ -19,9 +17,7 @@ NOSO_MAP = {
     "ADHD": ["ADHD", "mild ADHD"],
     "CONTROL": ["999"],
 }
-REVERSE_NOSO_MAP = {
-    value: key for key, arr in NOSO_MAP.items() for value in arr
-}
+REVERSE_NOSO_MAP = {value: key for key, arr in NOSO_MAP.items() for value in arr}
 
 log = logging.getLogger(__name__)
 
@@ -121,9 +117,7 @@ class JSONData:
         self.invalid_count = 0
 
         for key in ["TCP", "UCLA"]:
-            self.noso_counters[key] = dict.fromkeys(
-                NOSO_MAP.keys() | {"OTHER"}, 0
-            )
+            self.noso_counters[key] = dict.fromkeys(NOSO_MAP.keys() | {"OTHER"}, 0)
             self.gender_counters[key] = dict.fromkeys({"M", "F", "O"}, 0)
             self.age_counters[key] = dict.fromkeys(
                 [str(age) for age in itertools.chain(range(18, 69), [999])], 0
@@ -198,10 +192,7 @@ class JSONData:
                 if measurement not in self.data[patient]:
                     self.data[patient][measurement] = {}
 
-                if (
-                    not brain
-                    and substructure in self.data[patient][measurement]
-                ):
+                if not brain and substructure in self.data[patient][measurement]:
                     raise ValueError(
                         f"Duplicate substructure {substructure} "
                         + f"for patient {patient} in {measurement}"
@@ -210,9 +201,7 @@ class JSONData:
                     self.data[patient][measurement] = attributes
                 else:
                     if substructure != "unknown":
-                        self.data[patient][measurement][substructure] = (
-                            attributes
-                        )
+                        self.data[patient][measurement][substructure] = attributes
 
                 for key, value in attributes.items():
                     value = value.replace(",", ".")
@@ -244,9 +233,7 @@ class JSONData:
             csv_reader = csv.DictReader(csv_file, delimiter=",")
             for row in csv_reader:
                 if patient_column not in row:
-                    raise ValueError(
-                        "Important columns not found in the CSV file."
-                    )
+                    raise ValueError("Important columns not found in the CSV file.")
 
                 patient = row[patient_column]
                 patient = patient.replace("_", "")
@@ -262,9 +249,7 @@ class JSONData:
                     self.data[patient]["dataset"] = dataset
                     patients.add(patient)
         print(f"Patients not found in data: {sorted(not_found)}")
-        log.info(
-            f"Parsed {len(patients)} patients from {attr_name} from {csv_file_path}"
-        )
+        log.info(f"Parsed {len(patients)} patients from {attr_name} from {csv_file_path}")
 
     def _parse_dataset(self, dataset_name: str) -> None:
         for m in MEASUREMENTS:

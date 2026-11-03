@@ -12,6 +12,7 @@ from scripts.json_data import JSONData
 
 log = logging.getLogger(__name__)
 
+
 @final
 class NPZData:
     """Nosologies data in NPZ format (3 Numpy Arrays)."""
@@ -68,10 +69,7 @@ class NPZData:
             for measurement in MEASUREMENTS:
                 if measurement != "BRAINVOL":
                     for subarea, subarea_data in patient[measurement].items():
-                        if (
-                            measurement + subarea
-                            == "rh.aparc.DKTatlastemporalpole"
-                        ):
+                        if measurement + subarea == "rh.aparc.DKTatlastemporalpole":
                             continue
                         for key, value in subarea_data.items():
                             if key not in {"NumVert", "SegId", "NVoxels"}:
@@ -132,9 +130,7 @@ class NPZData:
         line = "-" * 110
         print(f"Columns with NaN: {len(has_nan)}")
         print(line)
-        print(
-            f"{'Index':<8} | {'Feature':<50} | {'NaN count':<12} | {'%':<10} | Status"
-        )
+        print(f"{'Index':<8} | {'Feature':<50} | {'NaN count':<12} | {'%':<10} | Status")
         print(line)
         for i in has_nan:
             pct = nan_counts[i] / self.patient_count * 100
@@ -160,9 +156,7 @@ class NPZData:
         self.data[:, candidates] = imputed[:, candidates]
 
         print(f"Imputed columns: {len(candidates)}")
-        print(
-            f"NaN remaining: {np.isnan(self.data).sum()} (in columns with > 5% NaN)"
-        )
+        print(f"NaN remaining: {np.isnan(self.data).sum()} (in columns with > 5% NaN)")
         log.info("Performed imputation")
         return self
 
@@ -179,7 +173,5 @@ class NPZData:
         self.cols = self.cols[keep]
         after = len(self.cols)
         print(f"Columns after: {after}")
-        log.info(
-            f"Dropped zeros. Columns (before | after): {before} | {after} "
-        )
+        log.info(f"Dropped zeros. Columns (before | after): {before} | {after} ")
         return self

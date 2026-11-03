@@ -33,18 +33,14 @@ def iqr_analyze(npz: NPZData, k: float = 3.0) -> np.ndarray:
     broken_counts = outlier_mask.sum(axis=1)
 
     suspect_idx = np.where(broken_counts >= threshold)[0]
-    suspect_idx = suspect_idx[
-        np.argsort(-broken_counts[suspect_idx], kind="stable")
-    ]
+    suspect_idx = suspect_idx[np.argsort(-broken_counts[suspect_idx], kind="stable")]
 
     print(f"Total patients: {npz.patient_count}")
     print(f"Patients with >= {threshold} IQR outliers: {len(suspect_idx)}")
     for i in suspect_idx[:20]:
         print(f"  {npz.rows[i]!s:<20} | {broken_counts[i]}")
 
-    report_path = (
-        REPORTS_DIR / f"iqr_patients_with_more_than_{threshold}_outliers.csv"
-    )
+    report_path = REPORTS_DIR / f"iqr_patients_with_more_than_{threshold}_outliers.csv"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with report_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)

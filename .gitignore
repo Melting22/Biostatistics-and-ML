@@ -34,5 +34,4 @@ logs.txt
 
 # IDE и системный мусор
 .idea/
-.vscode/
 .DS_Store

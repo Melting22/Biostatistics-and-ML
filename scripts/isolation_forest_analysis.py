@@ -36,9 +36,7 @@ def isolation_forest(
 
     scaled = StandardScaler().fit_transform(data)
 
-    iso_forest = IsolationForest(
-        contamination=contamination, random_state=random_state
-    )
+    iso_forest = IsolationForest(contamination=contamination, random_state=random_state)
     preds = iso_forest.fit_predict(scaled)
     anomaly_mask = preds == -1
     scores = iso_forest.decision_function(scaled)  # lower = more anomalous

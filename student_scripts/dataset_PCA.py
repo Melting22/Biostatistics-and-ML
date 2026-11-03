@@ -27,7 +27,7 @@ X_df = pd.DataFrame(X, columns=cols, index=rows)
 X_clean = X_df.fillna(X_df.median())
 
 # Загружаем nosologies.json для определения датасета (UCLA / TCP)
-with open(NOSOLOGIES_FILE, 'r', encoding='utf-8') as f:
+with open(NOSOLOGIES_FILE, encoding="utf-8") as f:
     nosologies_dict = json.load(f)
 
 datasets = []
@@ -35,10 +35,10 @@ for patient_id in rows:
     p_data = nosologies_dict.get(patient_id)
     ds = "Unknown"
     if p_data:
-        ds = p_data.get('dataset', 'Unknown')
+        ds = p_data.get("dataset", "Unknown")
     datasets.append(ds)
 
-X_df['Dataset'] = datasets
+X_df["Dataset"] = datasets
 
 # 2. Стандартизация и PCA
 print("--- Стандартизация и расчет PCA ---")
@@ -48,26 +48,33 @@ X_scaled = scaler.fit_transform(X_clean)
 pca = PCA(n_components=2)
 X_2d = pca.fit_transform(X_scaled)
 
-df_pca = pd.DataFrame(X_2d, columns=['PC1', 'PC2'], index=rows)
-df_pca['Dataset'] = X_df['Dataset']
+df_pca = pd.DataFrame(X_2d, columns=["PC1", "PC2"], index=rows)
+df_pca["Dataset"] = X_df["Dataset"]
 
 # Создаем понятные подписи для легенды
-ds_map = {'TCP': 'Клиника TCP', 'UCLA': 'Клиника UCLA', 'Unknown': 'Не указано'}
-df_pca['Dataset_Label'] = df_pca['Dataset'].map(ds_map)
+ds_map = {"TCP": "Клиника TCP", "UCLA": "Клиника UCLA", "Unknown": "Не указано"}
+df_pca["Dataset_Label"] = df_pca["Dataset"].map(ds_map)
 
 # 3. Визуализация
 plt.figure(figsize=(10, 8))
 sns.scatterplot(
-    data=df_pca, x='PC1', y='PC2', 
-    hue='Dataset_Label', 
+    data=df_pca,
+    x="PC1",
+    y="PC2",
+    hue="Dataset_Label",
     palette={
-        'Клиника TCP': 'forestgreen', 
-        'Клиника UCLA': 'darkorange', 
-        'Не указано': 'gray'
-    }, 
-    alpha=0.8, s=60
+        "Клиника TCP": "forestgreen",
+        "Клиника UCLA": "darkorange",
+        "Не указано": "gray",
+    },
+    alpha=0.8,
+    s=60,
 )
-plt.title("Распределение пациентов на PCA по датасетам (Эффект сканера)", fontsize=13, fontweight='bold')
+plt.title(
+    "Распределение пациентов на PCA по датасетам (Эффект сканера)",
+    fontsize=13,
+    fontweight="bold",
+)
 plt.xlabel("Главная компонента 1 (PC1)")
 plt.ylabel("Главная компонента 2 (PC2)")
 plt.legend(title="Датасет / Сканер")

@@ -88,11 +88,7 @@ def create_tsne(
     plt.ylabel("t-SNE Компонента 2", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.5)
 
-    save_path = (
-        CHARTS_DIR
-        / "TSNE"
-        / f"{init}_{perplexity}_{max_iter}_{random_state}.png"
-    )
+    save_path = CHARTS_DIR / "TSNE" / f"{init}_{perplexity}_{max_iter}_{random_state}.png"
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path)
     plt.close()
@@ -100,9 +96,7 @@ def create_tsne(
     # Plot colored TSNE
     for criteria in ("gender", "dataset", "nosology"):
         log.info(f"Plotting colored TSNE ({criteria})")
-        labels = np.array(
-            [patients_info[patient][criteria] for patient in npz.rows]
-        )
+        labels = np.array([patients_info[patient][criteria] for patient in npz.rows])
 
         unique_labels = np.unique(labels)
 

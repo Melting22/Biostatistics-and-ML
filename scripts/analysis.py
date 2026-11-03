@@ -95,9 +95,7 @@ def _print_zero_table(
     print(line)
     for i in indices:
         pct = zero_counts[i] / npz.patient_count * 100
-        print(
-            f"{i:<8} | {npz.cols[i]!s:<70} | {zero_counts[i]:<12} | {pct:.2f}%"
-        )
+        print(f"{i:<8} | {npz.cols[i]!s:<70} | {zero_counts[i]:<12} | {pct:.2f}%")
     print(line)
 
 
@@ -107,12 +105,12 @@ def check_manually(npz: NPZData) -> None:
     sample_size = max(1, int(npz.patient_count * 0.05))
 
     rng = np.random.default_rng(42)
-    random_indices = rng.choice(
-        npz.patient_count, size=sample_size, replace=False
-    )
+    random_indices = rng.choice(npz.patient_count, size=sample_size, replace=False)
 
-    print(f"Selected {sample_size} patients for a manual check "
-        + f"(5% of {npz.patient_count} samples):")
+    print(
+        f"Selected {sample_size} patients for a manual check "
+        + f"(5% of {npz.patient_count} samples):"
+    )
     print("-" * 65)
     print(f"{'№':<4} | {'Код пациента (Rows)':<20} | {'Индекс в массиве'}")
     print("-" * 65)
