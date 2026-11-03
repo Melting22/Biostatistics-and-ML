@@ -2,6 +2,8 @@ from pathlib import Path
 
 from numpy import float32
 
+from flash_dir import FLASH_DIR
+
 MEASUREMENTS = [
     "hypothalamic_subunits_volumes.v",
     "lh.aparc.pial",
@@ -34,10 +36,10 @@ MEASUREMENTS = [
 VALUES_DTYPE = float32
 
 BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = FLASH_DIR / "data"
 
 CSV_DIR = BASE_DIR / "csv_data"
 TEMP_DIR = BASE_DIR / ".tmp"
-DATA_DIR = BASE_DIR / "data"
 REPORTS_DIR = BASE_DIR / "reports"
 
 CHARTS_DIR = BASE_DIR / "charts"
