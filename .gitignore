@@ -5,6 +5,10 @@
 *.xls
 *.xlsx
 
+# Исключения для настроек vs code
+!.vscode/settings.json
+!.vscode/extensions.json
+
 # Игнорировать папки с данными
 .tmp/
 charts/
