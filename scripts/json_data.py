@@ -1,0 +1,246 @@
+import csv
+import itertools
+import json
+from pathlib import Path
+from typing import Any
+
+from constants import (
+    CSV_DIR,
+    MEASUREMENTS,
+    NOSOLOGIES_FILE,
+)
+
+NOSO_MAP = {
+    "BIPOLAR": ["BP1", "BP2", "BPI", "BPII", "cyclothymia"],
+    "SCHZ": ["SZA", "SZ ", "SZ (ruleout SZA)", "SZ", "SZ or SZA"],
+    "ADHD": ["ADHD", "mild ADHD"],
+    "CONTROL": ["999"],
+}
+REVERSE_NOSO_MAP = {
+    value: key for key, arr in NOSO_MAP.items() for value in arr
+}
+
+
+class JSONData:
+    def __init__(self) -> None:
+        self.data: dict[str, Any] = {}
+
+    def from_csv(self) -> JSONData:
+        """
+        Converts all CSV data into a single JSON and writes it to `output_path`
+        """
+        self._parse_dataset("TCP")
+        self._parse_dataset("UCLA")
+
+        self._demos_csv_to_json(
+            CSV_DIR / "TCP_demos_fixed.csv",
+            "subjectkey",
+            "tcp_demos",
+            "TCP",
+        )
+        self._demos_csv_to_json(
+            CSV_DIR / "UCLA_demographics_fixed.csv",
+            "participant_id",
+            "ucla_demos",
+            "UCLA",
+        )
+        self._demos_csv_to_json(
+            CSV_DIR / "UCLA_participants_fixed.csv",
+            "participant_id",
+            "ucla_participant",
+            "UCLA",
+        )
+        return self
+
+    def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
+        with open(path, mode="w", encoding="utf-8") as json_file:
+            json.dump(self.data, json_file, indent=4, ensure_ascii=False)
+        return self
+
+    def normalize_nosologies(self) -> JSONData:
+        """
+        Normalize and summarize patient nosology, gender, and age statistics.
+        """
+        tcp_nosologies = set()
+        ucla_nosologies = set()
+        others = set()
+
+        invalid_count = 0
+
+        noso_counters = {}
+        gender_counters = {}
+        age_counters = {}
+        for key in ["TCP", "UCLA"]:
+            noso_counters[key] = dict.fromkeys(NOSO_MAP.keys() | {"OTHER"}, 0)
+            gender_counters[key] = dict.fromkeys({"M", "F", "O"}, 0)
+            age_counters[key] = dict.fromkeys(
+                [str(age) for age in itertools.chain(range(18, 69), [999])], 0
+            )
+
+        for patient in self.data.values():
+            if patient["dataset"] == "TCP":
+                nosology = patient["tcp_demos"]["Primary_Dx"]
+                tcp_nosologies.add(nosology)
+                if nosology in REVERSE_NOSO_MAP:
+                    patient["nosology"] = REVERSE_NOSO_MAP[nosology]
+                else:
+                    patient["nosology"] = "OTHER"
+                    others.add(nosology)
+                patient["gender"] = patient["tcp_demos"]["sex"]
+                patient["age"] = patient["tcp_demos"]["Age"]
+            elif patient["dataset"] == "UCLA":
+                nosology = patient["ucla_participant"]["diagnosis"]
+                patient["nosology"] = nosology
+                patient["gender"] = patient["ucla_participant"]["gender"]
+                patient["age"] = patient["ucla_participant"]["age"]
+                ucla_nosologies.add(nosology)
+            else:
+                raise ValueError("Wow, not a patient")
+
+            patient["valid"] = (
+                patient["nosology"] != "OTHER"
+                and patient["gender"] != "O"
+                and patient["age"] != "999"
+            )
+
+            if not patient["valid"]:
+                invalid_count += 1
+            ds = patient["dataset"]
+            nos = patient["nosology"]
+            gen = patient["gender"]
+            age = patient["age"]
+            age_counters[ds][age] += 1
+            gender_counters[ds][gen] += 1
+            noso_counters[ds][nos] += 1
+
+        print("TCP")
+        print(tcp_nosologies)
+        print("UCLA")
+        print(ucla_nosologies)
+        print("NOSOLOGIES")
+        print(json.dumps(noso_counters, indent=4, ensure_ascii=False))
+        print("GENDERS")
+        print(json.dumps(gender_counters, indent=4, ensure_ascii=False))
+        print("AGES")
+        print(*age_counters.items(), sep="\n")
+        print("OTHERS")
+        print(others)
+        print("ANOMALIES")
+        print(
+            "TOTAL",
+            len(self.data),
+            "OTHER",
+            len(others),
+            "INVALID",
+            invalid_count,
+        )
+        return self
+
+
+    def _substructure_csv_to_json(
+        self,
+        measurement: str,
+        csv_file_path: Path,
+        patient_column: str,
+        substructure_column: str,
+    ):
+        """
+        Converts substructure data from `csv_file_path` into JSON and puts it into `data`
+        """
+        patients = set()
+        brain = measurement == "BRAINVOL"
+        with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter=";")
+            for row in csv_reader:
+                if patient_column not in row or (
+                    not brain and substructure_column not in row
+                ):
+                    raise ValueError("Important columns not found in CSV file.")
+                patient = row[patient_column]
+                patients.add(patient)
+                if not brain:
+                    substructure = row[substructure_column]
+                else:
+                    substructure = ""
+
+                attributes = row.copy()
+                del attributes[patient_column]
+                if not brain:
+                    del attributes[substructure_column]
+                del attributes["source_file"]
+
+                if patient not in self.data:
+                    self.data[patient] = {}
+                if measurement not in self.data[patient]:
+                    self.data[patient][measurement] = {}
+
+                if (
+                    not brain
+                    and substructure in self.data[patient][measurement]
+                ):
+                    raise ValueError(
+                        f"Duplicate substructure {substructure} for patient {patient} in {measurement}"
+                    )
+                if brain:
+                    self.data[patient][measurement] = attributes
+                else:
+                    if substructure != "unknown":
+                        self.data[patient][measurement][substructure] = (
+                            attributes
+                        )
+
+                for key, value in attributes.items():
+                    value = value.replace(",", ".")
+                    attributes[key] = value
+                    try:
+                        float(value)
+                    except ValueError:
+                        raise ValueError(
+                            f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}"
+                        )
+                    if value == "nan" and substructure != "unknown":
+                        raise ValueError(f"NaN in {measurement} {substructure}")
+        print("Parsed", len(patients), "patients from ", measurement)
+
+    def _demos_csv_to_json(
+        self,
+        csv_file_path: Path,
+        patient_column: str,
+        attr_name: str,
+        dataset: str,
+    ):
+        """
+        Converts data from `csv_file_path` into JSON and puts it into `data`
+        """
+        patients = set()
+        with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter=",")
+            for row in csv_reader:
+                if patient_column not in row:
+                    raise ValueError(
+                        "Important columns not found in the CSV file."
+                    )
+
+                patient = row[patient_column]
+                patient = patient.replace("_", "")
+                if not patient.startswith("sub-"):
+                    patient = "sub-" + patient
+
+                attributes = row.copy()
+                del attributes[patient_column]
+                if patient not in self.data:
+                    print(f"Patient {patient} not in data.")
+                else:
+                    self.data[patient][attr_name] = attributes
+                    self.data[patient]["dataset"] = dataset
+                    patients.add(patient)
+        print("Parsed", len(patients), "patients from", attr_name)
+
+    def _parse_dataset(self, dataset_name: str):
+        """
+        Converts substructure measurements from `dataset_name` into JSON and puts it into `data`
+        """
+        for m in MEASUREMENTS:
+            path = CSV_DIR / f"{dataset_name}_CSV" / f"{dataset_name}_{m}.csv"
+            self._substructure_csv_to_json(m, path, "sub_name", "StructName")
+        print("Total", len(self.data), "patients.")

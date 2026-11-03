@@ -8,7 +8,3 @@
 ### Visualization:
  - histogram.py - draws histogram for the specified measurement
  - tsne.py - draws t-SNE charts of the data
-
-## TODO:
-- Remove code sections from `csv_parser.py` and `tables.py`
-- Run all scripts on uncorrupted `UCLA_lh.aparc.A2009s.csv` and `UCLA_rh.BA_exvivo.csv`
