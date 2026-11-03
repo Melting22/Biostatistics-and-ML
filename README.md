@@ -4,8 +4,7 @@
 1. Execute `./setup.sh` and activate the .venv
     - For nix users: run `nix-shell`
 2. Provide the `csv_data` folder with data
-3. Run `python scripts/processing/process_data.py`
-4. Run `python main.py`
+3. Run `python main.py`
 
 ### Contents:
  - original_data - data provided by customer

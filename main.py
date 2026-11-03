@@ -25,13 +25,6 @@ n = (
     .drop_columns_with_many_zeros()
     .save(path=DATA_FILE)
 )
-# n = (
-#     NPZData()
-#     .from_file(NOSOLOGIES_FILE)
-#     .fill_NaN()
-#     .drop_columns_with_many_zeros()
-#     .save()
-# )
 
 info(n)
 
