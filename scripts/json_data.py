@@ -48,7 +48,7 @@ class JSONData:
         print("NOSOLOGIES")
         self._print_info_dict("NOSOLOGIES", self.noso_counters)
         print("GENDERS")
-        self._print_info_dict("GENDERS", self.noso_counters)
+        self._print_info_dict("GENDERS", self.gender_counters)
         print("AGES")
         for k, table in self.age_counters.items():
             print(f"{k}: ")
