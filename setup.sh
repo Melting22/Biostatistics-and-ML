@@ -3,8 +3,6 @@ set -eu
 
 cd "$(dirname "$0")"
 
-mkdir -p ".tmp" charts data reports
-
 if [ ! -d .env ]; then
     python -m venv .venv
 fi

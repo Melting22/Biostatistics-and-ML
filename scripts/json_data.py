@@ -74,6 +74,7 @@ class JSONData:
     def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
         """Saves nosologies data to a JSON file."""
         log.info(f"Started saving to {path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as json_file:
             json.dump(self.data, json_file, indent=4, ensure_ascii=False)
         log.info(f"Saved to {path}")

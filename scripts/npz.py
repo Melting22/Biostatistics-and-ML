@@ -38,6 +38,7 @@ class NPZData:
     def save(self, path: Path = DATA_FILE) -> NPZData:
         """Saves nosologies data to `path`."""
         log.info(f"Started saving to {path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
             path,
             data=self.data,
