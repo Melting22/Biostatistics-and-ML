@@ -7,11 +7,10 @@ from numpy.lib.npyio import NpzFile
 from numpy.typing import NDArray
 from sklearn.impute import KNNImputer, SimpleImputer
 
-from constants import DATA_FILE, MEASUREMENTS
+from constants import DATA_FILE, MEASUREMENTS, VALUES_DTYPE
 from scripts.json_data import JSONData
 
 log = logging.getLogger(__name__)
-
 
 @final
 class NPZData:
@@ -30,6 +29,7 @@ class NPZData:
 
     def info(self) -> NPZData:
         """Prints various info about the data."""
+        print("\n--- NPZData info ---")
         print(f"Array shape: {self.data.shape}")
         print(f"Patient count: {self.patient_count}")
         return self
@@ -97,7 +97,7 @@ class NPZData:
         num_patients = len(self.rows)
         num_columns = len(self.cols)
 
-        self.data = np.zeros((num_patients, num_columns), dtype=np.float32)
+        self.data = np.zeros((num_patients, num_columns), dtype=VALUES_DTYPE)
         for i, patient_name in enumerate(self.rows):
             for j, column_name in enumerate(self.cols):
                 self.data[i][j] = float(patients[patient_name][column_name])

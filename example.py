@@ -1,12 +1,11 @@
 import logging
 
 from constants import DATA_FILE, NOSOLOGIES_FILE
-from scripts.analysis import info
 from scripts.iqr_analysis import iqr_analyze
 from scripts.isolation_forest_analysis import isolation_forest
 from scripts.json_data import JSONData
 from scripts.npz import NPZData
-from scripts.visualization import create_histogram, create_TSNE
+from scripts.visualization import create_histogram, create_tsne
 
 logging.basicConfig(
     filename="logs.txt",
@@ -31,26 +30,27 @@ n = (
     # Convert nosologies json data into NPZ
     .from_jsondata(j)
     # Deal with NaN values
-    .fill_NaN()
+    .fill_nan()
     # Deal with columns with too many zeros
     .drop_columns_with_many_zeros()
     # Save to an NPZ file
     .save(path=DATA_FILE)
 )
 
-# Save as above, loading from a saved json file
-# n = (
-#     NPZData()
-#     .from_file(NOSOLOGIES_FILE)
-#     .fill_NaN()
-#     .drop_columns_with_many_zeros()
-#     .save()
-# )
+# Save as above, loading from a saved NPZ file
+n = (
+    NPZData()
+    .from_file(DATA_FILE)
+    .fill_nan()
+    .drop_columns_with_many_zeros()
+    .save()
+)
 
-info(n)
+j.info()
+n.info()
 
-create_TSNE(n)
-create_histogram(n)
+create_tsne(n)
+create_histogram(n, 0)
 
 iqr_analyze(n)
 isolation_forest(n)

@@ -61,7 +61,7 @@ def isolation_forest(
     print(f"IsolationForest report saved to {report_path}")
 
     _plot(scaled, anomaly_mask)
-    log.info("Finished IQR outlier analysis")
+    log.info("Finished IsolationForest analysis")
     return anomaly_mask
 
 

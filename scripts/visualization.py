@@ -16,7 +16,7 @@ TSNE_COLORS = ["#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00"]
 log = logging.getLogger(__name__)
 
 
-def create_histogram(npz: NPZData, m_number: int = 55) -> None:
+def create_histogram(npz: NPZData, m_number: int) -> None:
     """Creates a histogram for the specified measurement."""
     if not 0 <= m_number < len(npz.cols):
         print(f"Measurement {m_number} doesn't exist")

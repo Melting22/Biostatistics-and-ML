@@ -5,6 +5,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from numpy import sort
+
 from constants import (
     CSV_DIR,
     MEASUREMENTS,
@@ -41,28 +43,37 @@ class JSONData:
 
     def info(self) -> JSONData:
         """Prints various info about the data."""
-        print("TCP")
-        print(self.tcp_nosologies)
-        print("UCLA")
-        print(self.ucla_nosologies)
+        # TODO: Export this information to `REPORTS_DIR`
+        print("\n--- JSONData info ---")
+        self._print_info_list("TCP", sorted(self.tcp_nosologies))
+        self._print_info_list("UCLA", sorted(self.ucla_nosologies))
+        self._print_info_list("OTHER", sorted(self.others))
+
         print("NOSOLOGIES")
-        print(json.dumps(self.noso_counters, indent=4, ensure_ascii=False))
+        self._print_info_dict("NOSOLOGIES", self.noso_counters)
         print("GENDERS")
-        print(json.dumps(self.gender_counters, indent=4, ensure_ascii=False))
+        self._print_info_dict("GENDERS", self.noso_counters)
         print("AGES")
-        print(*self.age_counters.items(), sep="\n")
-        print("OTHERS")
-        print(self.others)
+        for k, table in self.age_counters.items():
+            print(f"{k}: ")
+            for age, cnt in sorted(table.items(), key=lambda x: -x[1]):
+                print(f" - {age}: {cnt}")
+                if cnt == 0:
+                    break
         print("ANOMALIES")
-        print(
-            "TOTAL",
-            len(self.data),
-            "OTHER",
-            len(self.others),
-            "INVALID",
-            self.invalid_count,
-        )
+        print(f"TOTAL {len(self.data)}")
+        print(f"OTHER {len(self.others)}")
+        print(f"INVALID {self.invalid_count}")
         return self
+
+    def _print_info_list(self, title: str, li: list[Any]) -> None:
+        print(f"\n{title}")
+        for i, elem in enumerate(li):
+            print(f"{i + 1}. {elem}")
+
+    def _print_info_dict(self, title: str, di: dict[Any, Any]) -> None:
+        print(f"\n{title}")
+        print(json.dumps(di, indent=4, ensure_ascii=False))
 
     def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
         """Saves nosologies data to a JSON file."""

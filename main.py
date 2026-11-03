@@ -28,7 +28,7 @@ n = (
 
 
 create_tsne(n)
-create_histogram(n)
+create_histogram(n, 0)
 
 iqr_analyze(n)
 isolation_forest(n)

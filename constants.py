@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from numpy import float32
 
 MEASUREMENTS = [
     "hypothalamic_subunits_volumes.v",
@@ -27,8 +28,10 @@ MEASUREMENTS = [
     "lh.aparc.DKTatlas",
     "rh.BA_exvivo",
     "aseg",
-    "BRAINVOL"
+    "BRAINVOL",
 ]
+
+VALUES_DTYPE = float32
 
 BASE_DIR = Path(__file__).resolve().parent
 
