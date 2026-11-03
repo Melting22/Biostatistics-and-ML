@@ -5,7 +5,7 @@ from scripts.iqr_analysis import iqr_analyze
 from scripts.isolation_forest_analysis import isolation_forest
 from scripts.json_data import JSONData
 from scripts.npz import NPZData
-from scripts.visualization import create_histogram, create_TSNE
+from scripts.visualization import create_histogram, create_tsne
 
 logging.basicConfig(
     filename="logs.txt",
@@ -20,14 +20,14 @@ j = JSONData().from_csv().normalize_nosologies().save(path=NOSOLOGIES_FILE)
 n = (
     NPZData()
     .from_jsondata(j)
-    .fill_NaN()
+    .fill_nan()
     .drop_columns_with_many_zeros()
     .save(path=DATA_FILE)
     .info()
 )
 
 
-create_TSNE(n)
+create_tsne(n)
 create_histogram(n)
 
 iqr_analyze(n)

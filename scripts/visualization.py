@@ -16,10 +16,8 @@ TSNE_COLORS = ["#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00"]
 log = logging.getLogger(__name__)
 
 
-def create_histogram(npz: NPZData, m_number: int = 55):
-    """
-    Creates a histogram for the specified measurement
-    """
+def create_histogram(npz: NPZData, m_number: int = 55) -> None:
+    """Creates a histogram for the specified measurement."""
     if not 0 <= m_number < len(npz.cols):
         print(f"Measurement {m_number} doesn't exist")
         return
@@ -47,31 +45,27 @@ def create_histogram(npz: NPZData, m_number: int = 55):
     plt.xlabel("Значения", fontsize=12)
     plt.ylabel("Плотность вероятности", fontsize=12)
 
-    # plt.show()
-
     save_path = CHARTS_DIR / "histograms" / f"{measurement_name}.png"
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path)
     plt.close()
 
 
-def create_TSNE(
+def create_tsne(
     npz: NPZData,
     init: Literal["random", "pca"] = "pca",
     perplexity: int = 30,
     max_iter: int = 1000,
     random_state: int = 42,
     nosologies_file: Path = NOSOLOGIES_FILE,
-):
-    """
-    Creates TSNE charts
-    """
+) -> None:
+    """Creates TSNE charts."""
     data = npz.data  # (501, 4600)
 
-    with open(nosologies_file, "r", encoding="utf-8") as f:
+    with nosologies_file.open("r", encoding="utf-8") as f:
         patients_info = json.load(f)
 
-    # perplexity обычно выбирают в пределах от 5 до 50 (для 501 вектора хорошо подойдет 30)
+    # perplexity обычно выбирают в пределах от 5 до 50 (для 501 вектора подойдет 30)
     tsne = TSNE(
         n_components=2,
         perplexity=perplexity,
@@ -79,12 +73,12 @@ def create_TSNE(
         max_iter=max_iter,
         init=init,
     )
-    X_2d = tsne.fit_transform(data)
+    x_2d = tsne.fit_transform(data)
 
     # Plot regular TSNE
     log.info("Plotting regular TSNE")
     plt.figure(figsize=(10, 8))
-    plt.scatter(X_2d[:, 0], X_2d[:, 1], c="blue", alpha=0.7, edgecolors="b")
+    plt.scatter(x_2d[:, 0], x_2d[:, 1], c="blue", alpha=0.7, edgecolors="b")
 
     plt.title(
         f"t-SNE визуализация векторов ({data.shape[0]} x {data.shape[1]} -> 2D)",
@@ -93,8 +87,6 @@ def create_TSNE(
     plt.xlabel("t-SNE Компонента 1", fontsize=12)
     plt.ylabel("t-SNE Компонента 2", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.5)
-
-    # plt.show()
 
     save_path = (
         CHARTS_DIR
@@ -116,20 +108,18 @@ def create_TSNE(
 
         plt.figure(figsize=(10, 8))
 
-        for label, color in zip(unique_labels, TSNE_COLORS):
+        for label, color in zip(unique_labels, TSNE_COLORS, strict=False):
             mask = labels == label
 
             plt.scatter(
-                X_2d[mask, 0],
-                X_2d[mask, 1],
+                x_2d[mask, 0],
+                x_2d[mask, 1],
                 c=[color],
                 label=str(label),
                 alpha=0.8,
                 edgecolors="b",
                 s=40,  # Dot size
             )
-        # plt.scatter(X_2d[:, 0], X_2d[:, 1], alpha=0.7, edgecolors='b', cmap='viridis')
-
         plt.title(
             f"t-SNE визуализация векторов ({data.shape[0]} x {data.shape[1]} -> 2D)",
             fontsize=14,
@@ -140,7 +130,6 @@ def create_TSNE(
 
         plt.legend(title="Группы", fontsize=11, title_fontsize=12, loc="best")
 
-        # plt.show()
         save_path = (
             CHARTS_DIR
             / "TSNE_color"

@@ -21,3 +21,71 @@ py-modules = ["constants"]
 [tool.setuptools.packages.find]
 namespaces = false
 exclude = ["tests*"]
+
+
+# Linters and formatters
+[tool.ruff]
+line-length = 90
+target-version = "py314"
+src = ["."]
+
+[tool.ruff.format]
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle: ошибки (в т.ч. E501, длина строки)
+    "W",    # pycodestyle: предупреждения (в т.ч. W505, длина комментария)
+    "F",    # pyflakes
+    "I",    # порядок импортов
+    "N",    # именование
+    "D",    # докстринги: обязательны у классов, функций, методов
+    "ANN",  # аннотации типов у параметров и возвращаемых значений
+    "UP",   # современный синтаксис Python
+    "B",    # flake8-bugbear
+    "A",    # не затенять встроенные имена
+    "C4",   # comprehensions
+    "SIM",  # упрощение кода
+    "PTH",  # pathlib вместо os.path
+    "PERF", # типичные ловушки производительности
+    "NPY",  # устаревшие приёмы NumPy
+    "PGH",  # `# noqa` и `# type: ignore` только с кодом правила
+    "ERA",  # закомментированный код
+    "RUF",  # правила ruff (в т.ч. RUF100, лишний `# noqa`)
+]
+ignore = [
+    "ANN401",  # разрешить Any
+    # Докстринг модуля и пакета не требуется.
+    "D100",
+    "D104",
+    # Ложные срабатывания на русском тексте: слова «с», «о», «а» ruff
+    # принимает за латинские буквы-двойники.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 90
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["constants"]
+
+[tool.basedpyright]
+pythonVersion = "3.14"
+venvPath = "."
+venv = ".venv"
+include = ["constants.py", "scripts"]
+typeCheckingMode = "recommended"
+reportAny = "none"
+reportExplicitAny = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnusedCallResult = "none"

@@ -5,6 +5,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from numpy.typing import NDArray
 
 from constants import CHARTS_DIR, REPORTS_DIR
 from scripts.npz import NPZData
@@ -13,7 +14,8 @@ log = logging.getLogger(__name__)
 
 
 def iqr_analyze(npz: NPZData, k: float = 3.0) -> np.ndarray:
-    """
+    """Performs IQR analysis.
+
     Counts IQR outliers per patient (k * IQR fences), reports patients
     with outliers in at least 1% of features. Returns counts per patient.
     """
@@ -44,7 +46,7 @@ def iqr_analyze(npz: NPZData, k: float = 3.0) -> np.ndarray:
         REPORTS_DIR / f"iqr_patients_with_more_than_{threshold}_outliers.csv"
     )
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(report_path, "w", newline="", encoding="utf-8") as f:
+    with report_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["patient_id", "broken_features_count"])
         for i in suspect_idx:
@@ -56,7 +58,7 @@ def iqr_analyze(npz: NPZData, k: float = 3.0) -> np.ndarray:
     return broken_counts
 
 
-def _plot(broken_counts: Any, threshold: int):
+def _plot(broken_counts: NDArray[Any], threshold: int) -> None:
     plt.figure(figsize=(12, 6))
     sns.histplot(broken_counts, bins=30, color="teal", kde=True)
     plt.axvline(

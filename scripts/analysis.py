@@ -1,14 +1,13 @@
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from scripts.npz import NPZData
 
 
-def show_patient_data(npz: NPZData, patient_identifier: int | str = 73):
-    """
-    Outputs all measurement data on a patient. Accepts index or ID-code.
-    """
+def show_patient_data(npz: NPZData, patient_identifier: int | str = 73) -> None:
+    """Outputs all measurement data on a patient. Accepts index or ID-code."""
     if isinstance(patient_identifier, int):
         idx = patient_identifier
         if not 0 <= idx < npz.patient_count:
@@ -26,9 +25,7 @@ def show_patient_data(npz: NPZData, patient_identifier: int | str = 73):
 
 
 def find_duplicates(npz: NPZData) -> bool:
-    """
-    Finds duplicate rows
-    """
+    """Finds duplicate rows."""
     unique_rows, counts = np.unique(npz.rows, return_counts=True)
     duplicates = unique_rows[counts > 1]
 
@@ -44,10 +41,8 @@ def find_duplicates(npz: NPZData) -> bool:
     return len(duplicates) > 0
 
 
-def check_invalid_negatives(npz: NPZData):
-    """
-    Finds positive-only measurements where negative values occur
-    """
+def check_invalid_negatives(npz: NPZData) -> NDArray[Any]:
+    """Finds positive-only measurements where negative values occur."""
     # TODO: Find out what measurements can and can not be negative
     # TODO: Revise the logic
     names = np.char.lower(npz.cols.astype(str))
@@ -63,10 +58,8 @@ def check_invalid_negatives(npz: NPZData):
     return bad
 
 
-def check_zeros(npz: NPZData):
-    """
-    Prints info on zero value shares in columns
-    """
+def check_zeros(npz: NPZData) -> None:
+    """Prints info on zero value shares in columns."""
     zero_counts = (npz.data == 0).sum(axis=0)  # NaN == 0 -> False
     threshold = npz.patient_count * 0.05
 
@@ -88,7 +81,9 @@ def check_zeros(npz: NPZData):
     )
 
 
-def _print_zero_table(npz: NPZData, title: str, indices: Any, zero_counts: Any):
+def _print_zero_table(
+    npz: NPZData, title: str, indices: list[np.intp], zero_counts: list[np.intp]
+) -> None:
     print(f"\n--- {title} ---")
     if len(indices) == 0:
         print("No measurements found")
@@ -106,18 +101,18 @@ def _print_zero_table(npz: NPZData, title: str, indices: Any, zero_counts: Any):
     print(line)
 
 
-def check_manually(npz: NPZData):
+def check_manually(npz: NPZData) -> None:
+    """Select a few patients and run checks."""
     # TODO: Check these patients for zeros and negatives automatically
     sample_size = max(1, int(npz.patient_count * 0.05))
 
-    np.random.seed(42)
-    random_indices = np.random.choice(
+    rng = np.random.default_rng(42)
+    random_indices = rng.choice(
         npz.patient_count, size=sample_size, replace=False
     )
 
-    print(
-        f"Selected {sample_size} patients for a manual check (5% of {npz.patient_count} samples):"
-    )
+    print(f"Selected {sample_size} patients for a manual check "
+        + f"(5% of {npz.patient_count} samples):")
     print("-" * 65)
     print(f"{'№':<4} | {'Код пациента (Rows)':<20} | {'Индекс в массиве'}")
     print("-" * 65)

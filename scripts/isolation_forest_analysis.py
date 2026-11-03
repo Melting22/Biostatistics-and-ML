@@ -18,7 +18,8 @@ log = logging.getLogger(__name__)
 def isolation_forest(
     npz: NPZData, contamination: float = 0.02, random_state: int = 42
 ) -> np.ndarray:
-    """
+    """Performs IsolationForest analysis.
+
     Flags multivariate anomalies with Isolation Forest on standardized data.
     Returns boolean mask of anomalous patients.
     """
@@ -51,7 +52,7 @@ def isolation_forest(
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     report_path = REPORTS_DIR / "isolation_forest_anomalies_list.csv"
-    with open(report_path, "w", newline="", encoding="utf-8") as f:
+    with report_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["patient_id", "status", "score"])
         for i in anomalous_idx:
@@ -64,7 +65,7 @@ def isolation_forest(
     return anomaly_mask
 
 
-def _plot(scaled: NDArray[Any], anomaly_mask: NDArray[Any]):
+def _plot(scaled: NDArray[Any], anomaly_mask: NDArray[Any]) -> None:
     x_2d = PCA(n_components=2).fit_transform(scaled)
 
     plt.figure(figsize=(10, 8))

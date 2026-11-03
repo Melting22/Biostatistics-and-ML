@@ -25,11 +25,10 @@ log = logging.getLogger(__name__)
 
 
 class JSONData:
-    """
-    Nosologies data in JSON format
-    """
+    """Nosologies data in JSON format."""
 
     def __init__(self) -> None:
+        """Initializes `JSONData` object with empty values."""
         self.data: dict[str, Any] = {}
 
         self.tcp_nosologies: set[str] = set()
@@ -41,6 +40,7 @@ class JSONData:
         self.invalid_count: int = 0
 
     def info(self) -> JSONData:
+        """Prints various info about the data."""
         print("TCP")
         print(self.tcp_nosologies)
         print("UCLA")
@@ -65,19 +65,15 @@ class JSONData:
         return self
 
     def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
-        """
-        Saves nosologies data to a JSON file
-        """
+        """Saves nosologies data to a JSON file."""
         log.info(f"Started saving to {path}")
-        with open(path, mode="w", encoding="utf-8") as json_file:
+        with path.open("w", encoding="utf-8") as json_file:
             json.dump(self.data, json_file, indent=4, ensure_ascii=False)
         log.info(f"Saved to {path}")
         return self
 
     def from_csv(self) -> JSONData:
-        """
-        Extracts data from files in `CSV_DIR`
-        """
+        """Extracts data from files in `CSV_DIR`."""
         log.info("Started parsing CSV files")
         self._parse_dataset("TCP")
         self._parse_dataset("UCLA")
@@ -104,9 +100,7 @@ class JSONData:
         return self
 
     def normalize_nosologies(self) -> JSONData:
-        """
-        Normalizes patient nosology, gender, and age statistics.
-        """
+        """Normalizes patient nosology, gender, and age statistics."""
         self.tcp_nosologies = set()
         self.ucla_nosologies = set()
         self.others = set()
@@ -168,13 +162,10 @@ class JSONData:
         csv_file_path: Path,
         patient_column: str,
         substructure_column: str,
-    ):
-        """
-        Converts substructure data from `csv_file_path` into JSON and puts it into `self.data`
-        """
+    ) -> None:
         patients = set()
         brain = measurement == "BRAINVOL"
-        with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
+        with csv_file_path.open(encoding="utf-8") as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=";")
             for row in csv_reader:
                 if patient_column not in row or (
@@ -183,10 +174,7 @@ class JSONData:
                     raise ValueError("Important columns not found in CSV file.")
                 patient = row[patient_column]
                 patients.add(patient)
-                if not brain:
-                    substructure = row[substructure_column]
-                else:
-                    substructure = ""
+                substructure = row[substructure_column] if not brain else ""
 
                 attributes = row.copy()
                 del attributes[patient_column]
@@ -204,7 +192,8 @@ class JSONData:
                     and substructure in self.data[patient][measurement]
                 ):
                     raise ValueError(
-                        f"Duplicate substructure {substructure} for patient {patient} in {measurement}"
+                        f"Duplicate substructure {substructure} "
+                        + f"for patient {patient} in {measurement}"
                     )
                 if brain:
                     self.data[patient][measurement] = attributes
@@ -220,8 +209,10 @@ class JSONData:
                     try:
                         float(value)
                     except ValueError:
-                        raise ValueError(
-                            f"Wrong format for {value} in {measurement} {substructure}\n{json.dumps(row, indent=4, ensure_ascii=False)}"
+                        raise ValueError(  # noqa: B904
+                            f"Wrong format for {value} "
+                            + f"in {measurement} {substructure}\n"
+                            + f"{json.dumps(row, indent=4, ensure_ascii=False)}"
                         )
                     if value == "nan" and substructure != "unknown":
                         raise ValueError(f"NaN in {measurement} {substructure}")
@@ -235,13 +226,10 @@ class JSONData:
         patient_column: str,
         attr_name: str,
         dataset: str,
-    ):
-        """
-        Converts data from `csv_file_path` into JSON and puts it into `self.data`
-        """
+    ) -> None:
         patients = set()
         not_found = set()
-        with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
+        with csv_file_path.open(encoding="utf-8") as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=",")
             for row in csv_reader:
                 if patient_column not in row:
@@ -267,10 +255,7 @@ class JSONData:
             f"Parsed {len(patients)} patients from {attr_name} from {csv_file_path}"
         )
 
-    def _parse_dataset(self, dataset_name: str):
-        """
-        Converts substructure measurements from `dataset_name` into JSON and puts it into `self.data`
-        """
+    def _parse_dataset(self, dataset_name: str) -> None:
         for m in MEASUREMENTS:
             path = CSV_DIR / f"{dataset_name}_CSV" / f"{dataset_name}_{m}.csv"
             self._substructure_csv_to_json(m, path, "sub_name", "StructName")
