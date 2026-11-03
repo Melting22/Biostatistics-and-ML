@@ -25,6 +25,10 @@ log = logging.getLogger(__name__)
 
 
 class JSONData:
+    """
+    Nosologies data in JSON format
+    """
+
     def __init__(self) -> None:
         self.data: dict[str, Any] = {}
 
@@ -61,6 +65,9 @@ class JSONData:
         return self
 
     def save(self, path: Path = NOSOLOGIES_FILE) -> JSONData:
+        """
+        Saves nosologies data to a JSON file
+        """
         log.info(f"Started saving to {path}")
         with open(path, mode="w", encoding="utf-8") as json_file:
             json.dump(self.data, json_file, indent=4, ensure_ascii=False)
@@ -69,7 +76,7 @@ class JSONData:
 
     def from_csv(self) -> JSONData:
         """
-        Converts all CSV data into a single JSON and writes it to `output_path`
+        Extracts data from files in `CSV_DIR`
         """
         log.info("Started parsing CSV files")
         self._parse_dataset("TCP")
@@ -98,7 +105,7 @@ class JSONData:
 
     def normalize_nosologies(self) -> JSONData:
         """
-        Normalize and summarize patient nosology, gender, and age statistics.
+        Normalizes patient nosology, gender, and age statistics.
         """
         self.tcp_nosologies = set()
         self.ucla_nosologies = set()
@@ -163,7 +170,7 @@ class JSONData:
         substructure_column: str,
     ):
         """
-        Converts substructure data from `csv_file_path` into JSON and puts it into `data`
+        Converts substructure data from `csv_file_path` into JSON and puts it into `self.data`
         """
         patients = set()
         brain = measurement == "BRAINVOL"
@@ -230,9 +237,10 @@ class JSONData:
         dataset: str,
     ):
         """
-        Converts data from `csv_file_path` into JSON and puts it into `data`
+        Converts data from `csv_file_path` into JSON and puts it into `self.data`
         """
         patients = set()
+        not_found = set()
         with open(csv_file_path, mode="r", encoding="utf-8") as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=",")
             for row in csv_reader:
@@ -249,18 +257,19 @@ class JSONData:
                 attributes = row.copy()
                 del attributes[patient_column]
                 if patient not in self.data:
-                    print(f"Patient {patient} not in data.")
+                    not_found.add(patient)
                 else:
                     self.data[patient][attr_name] = attributes
                     self.data[patient]["dataset"] = dataset
                     patients.add(patient)
+        print(f"Patients not found in data: {sorted(not_found)}")
         log.info(
             f"Parsed {len(patients)} patients from {attr_name} from {csv_file_path}"
         )
 
     def _parse_dataset(self, dataset_name: str):
         """
-        Converts substructure measurements from `dataset_name` into JSON and puts it into `data`
+        Converts substructure measurements from `dataset_name` into JSON and puts it into `self.data`
         """
         for m in MEASUREMENTS:
             path = CSV_DIR / f"{dataset_name}_CSV" / f"{dataset_name}_{m}.csv"

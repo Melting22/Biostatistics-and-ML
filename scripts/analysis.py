@@ -27,7 +27,7 @@ def show_patient_data(npz: NPZData, patient_identifier: int | str = 73):
 
 def find_duplicates(npz: NPZData) -> bool:
     """
-    Find and outputs duplicate rows
+    Finds duplicate rows
     """
     unique_rows, counts = np.unique(npz.rows, return_counts=True)
     duplicates = unique_rows[counts > 1]
@@ -45,6 +45,11 @@ def find_duplicates(npz: NPZData) -> bool:
 
 
 def check_invalid_negatives(npz: NPZData):
+    """
+    Finds positive-only measurements where negative values occur
+    """
+    # TODO: Find out what measurements can and can not be negative
+    # TODO: Revise the logic
     names = np.char.lower(npz.cols.astype(str))
     allowed = np.zeros(len(names), dtype=bool)
     for token in ("/min", "curv", "кривизн", "asymmetry", "ai"):
@@ -55,9 +60,13 @@ def check_invalid_negatives(npz: NPZData):
     print(f"Measurements with invalid negative values: {len(bad)}")
     for i in bad[:10]:
         print(f"  - {npz.cols[i]}: {neg_counts[i]} invalid negatives")
+    return bad
 
 
 def check_zeros(npz: NPZData):
+    """
+    Prints info on zero value shares in columns
+    """
     zero_counts = (npz.data == 0).sum(axis=0)  # NaN == 0 -> False
     threshold = npz.patient_count * 0.05
 

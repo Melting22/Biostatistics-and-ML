@@ -15,6 +15,10 @@ log = logging.getLogger(__name__)
 
 @final
 class NPZData:
+    """
+    Nosologies data in NPZ format (3 Numpy Arrays)
+    """
+
     def __init__(self) -> None:
         self.data: NDArray[Any] = np.array([])
         self.rows: NDArray[Any] = np.array([])
@@ -31,7 +35,7 @@ class NPZData:
 
     def save(self, path: Path = DATA_FILE) -> NPZData:
         """
-        Writes the data to `output_path`
+        Saves nosologies data to `path`
         """
         # np.savez_compressed(
         #     output_path,
@@ -49,10 +53,13 @@ class NPZData:
         log.info(f"Saved to {path}")
         return self
 
-    def from_file(self, npz_file: Path = DATA_FILE) -> NPZData:
-        log.info(f"Started loading {npz_file}")
-        npz: NpzFile = np.load(npz_file, allow_pickle=True)
-        log.info(f"Loaded {npz_file}")
+    def from_file(self, path: Path = DATA_FILE) -> NPZData:
+        """
+        Loads nosologies data from NPZ file at `path`
+        """
+        log.info(f"Started loading {path}")
+        npz: NpzFile = np.load(path, allow_pickle=True)
+        log.info(f"Loaded {path}")
 
         self.data = npz["data"]
         self.rows = npz["rows"]
@@ -62,7 +69,7 @@ class NPZData:
 
     def from_jsondata(self, json_data: JSONData) -> NPZData:
         """
-        Converts JSON data to Numpy array and saves it as NPZ
+        Extracts nosologies data from a JSONData object
         """
         log.info("Started conversion from JSONData")
         patients = {}
@@ -110,7 +117,7 @@ class NPZData:
 
     def fill_all_NaN_with_mean(self) -> NPZData:
         """
-        Fills NaN values with mean column values in an NPZ file
+        Fills NaN values with mean column values
         """
         nan_count = np.isnan(self.data).sum()
         print(f"NaN values found: {nan_count}")
@@ -188,5 +195,7 @@ class NPZData:
         self.cols = self.cols[keep]
         after = len(self.cols)
         print(f"Columns after: {after}")
-        log.info(f"Dropped zeros. Columns (before | after): {before} | {after} ")
+        log.info(
+            f"Dropped zeros. Columns (before | after): {before} | {after} "
+        )
         return self
