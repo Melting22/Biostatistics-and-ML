@@ -3,8 +3,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
-if [ ! -d .env ]; then
-    python -m venv .venv
+if [ ! -d .venv ]; then
+    python3 -m venv .venv
 fi
 
 if [ -f .venv/Scripts/activate ]; then
