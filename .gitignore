@@ -4,6 +4,8 @@
 *.csv
 *.npz
 *.json
+*.png
+
 
 # Игнорировать папки с данными
 student_data/
