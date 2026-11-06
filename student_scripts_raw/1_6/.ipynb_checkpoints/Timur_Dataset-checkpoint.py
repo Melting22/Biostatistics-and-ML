@@ -1,0 +1,110 @@
+import os
+import json
+import numpy as np
+import pandas as pd
+from neuroCombat import neuroCombat
+
+# Глобальные пути проекта
+USB_ROOT = "/media/melting/5A80-1912/"
+DIR_1_3 = os.path.join(USB_ROOT, "master_data")
+DIR_1_4 = os.path.join(USB_ROOT, "master_data")
+DIR_3_1 = os.path.join(USB_ROOT, "Datasets") # Папка для итоговых датасетов
+os.makedirs(DIR_3_1, exist_ok=True)
+
+NOSOLOGIES_FILE = os.path.join(DIR_1_3, "nosologies.json")
+MEASUREMENTS_FILE = os.path.join(DIR_1_3, "measurements_with_legend.npz")
+EXCEL_REPORT = "feature_selection_report1.xlsx"
+ANOMALIES_CSV = "master_anomalies_audit_clean.csv"
+
+print("--- Генерация датасетов Timur (Hard, Soft, Combat) ---")
+
+# 1. Загружаем исходные данные
+data_load = np.load(MEASUREMENTS_FILE, allow_pickle=True)
+X_raw = data_load["data"]
+cols_raw = data_load["cols"]
+rows_raw = data_load["rows"]
+X_df = pd.DataFrame(X_raw, columns=cols_raw, index=rows_raw)
+
+# 2. Парсим отчет Excel и формируем списки на выброс
+# Заголовки находятся на 5 строке (header=5)
+df_drop_report = pd.read_excel(EXCEL_REPORT, sheet_name=0, header=6)
+# Очищаем наименования столбцов от случайных пробелов
+df_drop_report.columns = [str(c).strip() for c in df_drop_report.columns]
+
+# Определяем списки признаков:
+# - hard_features: только с приоритетом "Жёстко"
+# - soft_features: включает И "Жёстко", И "Мягко" (кумулятивный отбор)
+hard_drop_list = df_drop_report[df_drop_report['Приоритет'].astype(str).str.contains('Жёстк', na=False)]['Признак'].tolist()
+soft_drop_list = df_drop_report[df_drop_report['Приоритет'].astype(str).str.contains('Жёстк|Мягк', na=False)]['Признак'].tolist()
+
+# 3. Загружаем аудит аномалий по пациентам
+df_anom = pd.read_csv(ANOMALIES_CSV)
+anom_col = [c for c in df_anom.columns if 'Z' in c or 'IQR' in c or 'Экстремальных' in c][0]
+patient_anomalies = dict(zip(df_anom['patient_id'], df_anom[anom_col]))
+
+# 4. Загружаем метаданные сканеров и диагнозов
+with open(NOSOLOGIES_FILE, 'r', encoding='utf-8') as f:
+    nosologies_data = json.load(f)
+
+# ==========================================
+# A. ДАТАСЕТ HARD (Убираем "Жёстко", пациентов > 200 аномалий)
+# ==========================================
+print("\n🔨 1. Формирование Timur_hard_dataset.npz...")
+valid_hard_patients = [p for p in rows_raw if patient_anomalies.get(p, 0) <= 200]
+cols_to_drop_hard = [c for c in hard_drop_list if c in X_df.columns]
+
+X_hard_df = X_df.loc[valid_hard_patients].drop(columns=cols_to_drop_hard, errors='ignore')
+hard_path = os.path.join(DIR_3_1, "Timur_hard_dataset.npz")
+np.savez(hard_path, data=X_hard_df.values, cols=X_hard_df.columns.values, rows=X_hard_df.index.values)
+print(f"✅ Сохранен: {hard_path} | Форма: {X_hard_df.shape}")
+
+# ==========================================
+# Б. ДАТАСЕТ SOFT (Убираем "Жёстко" + "Мягко", пациентов > 100 аномалий)
+# ==========================================
+print("\n🍃 2. Формирование Timur_soft_dataset.npz...")
+valid_soft_patients = [p for p in rows_raw if patient_anomalies.get(p, 0) <= 100]
+cols_to_drop_soft = [c for c in soft_drop_list if c in X_df.columns]
+
+X_soft_df = X_df.loc[valid_soft_patients].drop(columns=cols_to_drop_soft, errors='ignore')
+soft_path = os.path.join(DIR_3_1, "Timur_soft_dataset.npz")
+np.savez(soft_path, data=X_soft_df.values, cols=X_soft_df.columns.values, rows=X_soft_df.index.values)
+print(f"✅ Сохранен: {soft_path} | Форма: {X_soft_df.shape}")
+
+# ==========================================
+# В. ДАТАСЕТ COMBAT (Берем Soft + применем neuroCombat)
+# ==========================================
+print("\n🛡️ 3. Формирование Timur_combat_dataset.npz...")
+combat_rows = X_soft_df.index.tolist()
+covars_list = []
+for pid in combat_rows:
+    p_info = nosologies_data.get(pid, {})
+    covars_list.append({
+        'site': p_info.get('dataset', 'UCLA'),
+        'age': float(p_info.get('age', 30)),
+        'is_schz': 1 if p_info.get('nosology', '') == 'SCHZ' else 0
+    })
+df_covars = pd.DataFrame(covars_list)
+
+# Данные для ComBat: признаки (строки) x пациенты (столбцы)
+dat_for_combat = X_soft_df.T.values
+
+design_df = pd.DataFrame({
+    'site': df_covars['site'].values,
+    'age': df_covars['age'].fillna(30).values,
+    'is_schz': df_covars['is_schz'].values
+})
+
+combat_results = neuroCombat(
+    dat=dat_for_combat,
+    covars=design_df,
+    batch_col='site',
+    categorical_cols=['is_schz'],
+    continuous_cols=['age']
+)
+
+X_combat = combat_results['data'].T
+combat_path = os.path.join(DIR_3_1, "Timur_combat_dataset.npz")
+np.savez(combat_path, data=X_combat, cols=X_soft_df.columns.values, rows=combat_rows)
+print(f"✅ Сохранен: {combat_path} | Форма: {X_combat.shape}")
+
+print("\n🎉 Все три датасета успешно выгружены в директорию Datasets!")

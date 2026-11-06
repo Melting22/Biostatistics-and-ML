@@ -1,0 +1,15 @@
+﻿patient_id,IQR выбросов,Isolation Forest,"Экстремальных (|Z|>3, чистая база)",Датасет,Нозология / Диагноз
+sub-10159,356,🚨 Да,352,UCLA,CONTROL
+sub-10269,225,🚨 Да,239,UCLA,CONTROL
+sub-11062,230,🚨 Да,227,UCLA,CONTROL
+sub-50022,217,🚨 Да,219,UCLA,SCHZ
+sub-50075,132,Нет,136,UCLA,SCHZ
+sub-50006,134,🚨 Да,135,UCLA,SCHZ
+sub-11098,108,🚨 Да,108,UCLA,CONTROL
+sub-NDARINVKZ112BTB,110,🚨 Да,103,TCP,OTHER
+sub-70021,91,🚨 Да,90,UCLA,ADHD
+sub-10707,84,🚨 Да,85,UCLA,CONTROL
+sub-10624,77,🚨 Да,75,UCLA,CONTROL
+sub-70007,63,Нет,66,UCLA,ADHD
+sub-50038,55,Нет,57,UCLA,SCHZ
+sub-NDARINVBL733HBP,50,Нет,49,TCP,OTHER
