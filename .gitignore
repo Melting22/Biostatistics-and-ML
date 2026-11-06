@@ -17,3 +17,7 @@ original_data/
 venv/
 .venv/
 .DS_Store
+
+# Кэш Python
+__pycache__/
+.ipynb_checkpoints/
